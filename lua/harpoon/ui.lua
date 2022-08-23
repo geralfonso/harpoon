@@ -49,16 +49,22 @@ function HarpoonUI:close_menu()
         return
     end
 
-    self.closing = true
-    Logger:log(
-        "ui#close_menu name: ",
-        list_name(self.active_list),
-        "win and bufnr",
-        {
-            win = self.win_id,
-            bufnr = self.bufnr,
-        }
+    local curr_file = utils.normalize_path(vim.api.nvim_buf_get_name(0))
+    vim.cmd(
+        string.format(
+            "autocmd Filetype harpoon " ..
+                "let path = '%s' | call clearmatches() | " ..
+                -- move the cursor to the line containing the current filename
+                "call search('\\V'.path.'\\$') | " ..
+                -- add a hl group to that line
+                "call matchadd('HarpoonCurrentFile', '\\V'.path.'\\$')",
+            curr_file:gsub("\\", "\\\\")
+        )
     )
+
+    local win_info = create_window()
+    local contents = {}
+    local global_config = harpoon.get_global_settings()
 
     if self.bufnr ~= nil and vim.api.nvim_buf_is_valid(self.bufnr) then
         vim.api.nvim_buf_delete(self.bufnr, { force = true })
