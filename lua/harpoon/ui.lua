@@ -94,9 +94,27 @@ function HarpoonUI:_create_window(toggle_opts)
         width = toggle_opts.ui_max_width
     end
 
-    local height = 8
-    local bufnr = vim.api.nvim_create_buf(false, true)
-    local win_id = vim.api.nvim_open_win(bufnr, true, {
+    local mark = Marked.get_marked_file(idx)
+    local filename = vim.fs.normalize(mark.filename)
+    local buf_id = get_or_create_buffer(filename)
+    local set_row = not vim.api.nvim_buf_is_loaded(buf_id)
+
+    vim.api.nvim_set_current_buf(buf_id)
+    vim.api.nvim_buf_set_option(buf_id, "buflisted", true)
+    if set_row and mark.row and mark.col then
+        vim.cmd(string.format(":call cursor(%d, %d)", mark.row, mark.col))
+        log.debug(
+            string.format(
+                "nav_file(): Setting cursor to row: %d, col: %d",
+                mark.row,
+                mark.col
+            )
+        )
+    end
+end
+
+function M.location_window(options)
+    local default_options = {
         relative = "editor",
         title = toggle_opts.title or "Harpoon",
         title_pos = toggle_opts.title_pos or "left",
