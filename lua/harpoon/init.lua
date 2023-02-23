@@ -18,9 +18,10 @@ local Harpoon = {}
 
 Harpoon.__index = Harpoon
 
----@return Harpoon
-function Harpoon:new()
-    local config = Config.get_default_config()
+local the_primeagen_harpoon = vim.api.nvim_create_augroup(
+    "THE_PRIMEAGEN_HARPOON",
+    { clear = true }
+)
 
     local harpoon = setmetatable({
         config = config,
@@ -45,7 +46,7 @@ vim.api.nvim_create_autocmd("FileType", {
             local working_directory = vim.fn.getcwd() .. "/"
             vim.cmd("vs")
             vim.cmd("e " .. working_directory .. curline)
-        end, { buffer=true, noremap = true, silent = true })
+        end, { buffer = true, noremap = true, silent = true })
 
         -- horizontal split (control+x)
         vim.keymap.set("n", "<C-x>", function()
@@ -53,7 +54,7 @@ vim.api.nvim_create_autocmd("FileType", {
             local working_directory = vim.fn.getcwd() .. "/"
             vim.cmd("sp")
             vim.cmd("e " .. working_directory .. curline)
-        end, { buffer=true, noremap = true, silent = true })
+        end, { buffer = true, noremap = true, silent = true })
 
         -- new tab (control+t)
         vim.keymap.set("n", "<C-t>", function()
@@ -61,8 +62,8 @@ vim.api.nvim_create_autocmd("FileType", {
             local working_directory = vim.fn.getcwd() .. "/"
             vim.cmd("tabnew")
             vim.cmd("e " .. working_directory .. curline)
-        end, { buffer=true, noremap = true, silent = true })
-    end
+        end, { buffer = true, noremap = true, silent = true })
+    end,
 })
 --[[
 {

@@ -120,7 +120,7 @@ function HarpoonUI:_create_window(toggle_opts)
         )
     end
 
-    local old_bufinfo = vim.fn.getbufinfo(old_bufnr);
+    local old_bufinfo = vim.fn.getbufinfo(old_bufnr)
     if type(old_bufinfo) == "table" and #old_bufinfo >= 1 then
         old_bufinfo = old_bufinfo[1]
         local no_name = old_bufinfo.name == ""
