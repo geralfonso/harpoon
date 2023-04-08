@@ -7,9 +7,31 @@ function M.remove_duplicate_whitespace(str)
     return str:gsub("%s+", " ")
 end
 
-function M.split(str, sep)
-    if sep == nil then
-        sep = "%s"
+function M.branch_key()
+    local branch
+
+    -- use tpope's fugitive for faster branch name resolution if available
+    if vim.fn.exists("*FugitiveHead") == 1 then
+        branch = vim.fn["FugitiveHead"]()
+        -- return "HEAD" for parity with `git rev-parse` in detached head state
+        if #branch == 0 then
+            branch = "HEAD"
+        end
+    else
+        -- `git branch --show-current` requires Git v2.22.0+ so going with more
+        -- widely available command
+        branch = M.get_os_command_output({
+            "git",
+            "rev-parse",
+            "--abbrev-ref",
+            "HEAD",
+        })[1]
+    end
+
+    if branch then
+        return vim.loop.cwd() .. "-" .. branch
+    else
+        return M.project_key()
     end
     local t = {}
     for s in string.gmatch(str, "([^" .. sep .. "]+)") do
