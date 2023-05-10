@@ -143,6 +143,11 @@ global_settings = {
 
     -- set marks specific to each git branch inside git repository
     mark_branch = false,
+
+    -- enable tabline with harpoon marks
+    tabline = false,
+    tabline_prefix = "   ",
+    tabline_suffix = "   ",
 }
 ```
 
@@ -351,37 +356,28 @@ harpoon:extend({
 })
 ```
 
-### Highlight Groups
-TODO: Fill in the idea that we will emit out window information
 
-### Logger
-This can help debug issues on other's computer.  To get your debug log please do the following.
+#### Tabline
 
-1. open up a new instance of vim
-1. perform exact operation to cause bug
-1. execute vim command `:lua require("harpoon").logger:show()` and copy the buffer
-1. paste the buffer as part of the bug creation
+By default, the tabline will use the default theme of your theme.  You can customize by editing the following highlights:
 
-## Extends
-THIS PART OF THE DOCS NEEDS FILLING OUT
+* HarpoonInactive
+* HarpoonActive
+* HarpoonNumberActive
+* HarpoonNumberInactive
+
+Example to make it cleaner:
 
 ```lua
-local harpoon = require("harpoon");
-local extensions = require("harpoon.extensions");
-
-harpoon:setup()
-harpoon:extend(extensions.builtins.command_on_nav("foo bar"));
-harpoon:extend(extensions.builtins.navigate_with_number());
+vim.cmd('highlight! HarpoonInactive guibg=NONE guifg=#63698c')
+vim.cmd('highlight! HarpoonActive guibg=NONE guifg=white')
+vim.cmd('highlight! HarpoonNumberActive guibg=NONE guifg=#7aa2f7')
+vim.cmd('highlight! HarpoonNumberInactive guibg=NONE guifg=#7aa2f7')
+vim.cmd('highlight! TabLineFill guibg=NONE guifg=white')
 ```
 
-## ⇁ Contribution
-This project is officially open source, not just public source.  If you wish to
-contribute start with an issue and I am totally willing for PRs, but I will be
-very conservative on what I take.  I don't want Harpoon _solving_ specific
-issues, I want it to create the proper hooks to solve any problem
-
-**Running Tests**  
-To run the tests make sure [plenary](https://github.com/nvim-lua/plenary.nvim) is checked out in the parent directory of *this* repository, then run `make test`.
+Result: 
+![tabline](https://i.imgur.com/8i8mKJD.png) 
 
 ## ⇁ Social
 For questions about Harpoon, there's a #harpoon channel on [the Primeagen's Discord](https://discord.gg/theprimeagen) server.

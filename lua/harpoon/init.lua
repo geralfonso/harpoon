@@ -149,11 +149,103 @@ function Harpoon:sync()
     self.data:sync()
 end
 
---luacheck: ignore 212/self
-function Harpoon:info()
-    return {
-        paths = Data.info(),
-        default_list_name = Config.DEFAULT_LIST,
+local function expand_dir(config)
+    log.trace("_expand_dir(): Config pre-expansion:", config)
+
+    local projects = config.projects or {}
+    for k in pairs(projects) do
+        local expanded_path = Path.new(k):expand()
+        projects[expanded_path] = projects[k]
+        if expanded_path ~= k then
+            projects[k] = nil
+        end
+    end
+
+    log.trace("_expand_dir(): Config post-expansion:", config)
+    return config
+end
+
+function M.save()
+    -- first refresh from disk everything but our project
+    M.refresh_projects_b4update()
+
+    log.trace("save(): Saving cache config to", cache_config)
+    Path:new(cache_config):write(vim.fn.json_encode(HarpoonConfig), "w")
+end
+
+local function read_config(local_config)
+    log.trace("_read_config():", local_config)
+    return vim.json.decode(Path:new(local_config):read())
+end
+
+-- 1. saved.  Where do we save?
+function M.setup(config)
+    log.trace("setup(): Setting up...")
+
+    if not config then
+        config = {}
+    end
+
+    local ok, u_config = pcall(read_config, user_config)
+
+    if not ok then
+        log.debug("setup(): No user config present at", user_config)
+        u_config = {}
+    end
+
+    local ok2, c_config = pcall(read_config, cache_config)
+
+    if not ok2 then
+        log.debug("setup(): No cache config present at", cache_config)
+        c_config = {}
+    end
+
+    local complete_config = merge_tables({
+        projects = {},
+        global_settings = {
+            ["save_on_toggle"] = false,
+            ["save_on_change"] = true,
+            ["enter_on_sendcmd"] = false,
+            ["tmux_autoclose_windows"] = false,
+            ["excluded_filetypes"] = { "harpoon" },
+            ["mark_branch"] = false,
+            ["tabline"] = false,
+            ["tabline_suffix"] = "   ",
+            ["tabline_prefix"] = "   ",
+        },
+    }, expand_dir(c_config), expand_dir(u_config), expand_dir(config))
+
+    -- There was this issue where the vim.loop.cwd() didn't have marks or term, but had
+    -- an object for vim.loop.cwd()
+    ensure_correct_config(complete_config)
+
+    if complete_config.tabline then
+        require("harpoon.tabline").setup(complete_config)
+    end
+
+    HarpoonConfig = complete_config
+
+    log.debug("setup(): Complete config", HarpoonConfig)
+    log.trace("setup(): log_key", Dev.get_log_key())
+end
+
+function M.get_global_settings()
+    log.trace("get_global_settings()")
+    return HarpoonConfig.global_settings
+end
+
+-- refresh all projects from disk, except our current one
+function M.refresh_projects_b4update()
+    log.trace(
+        "refresh_projects_b4update(): refreshing other projects",
+        cache_config
+    )
+    -- save current runtime version of our project config for merging back in later
+    local cwd = mark_config_key()
+    local current_p_config = {
+        projects = {
+            [cwd] = ensure_correct_config(HarpoonConfig).projects[cwd],
+        },
     }
 end
 
