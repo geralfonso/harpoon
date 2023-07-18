@@ -49,22 +49,16 @@ function HarpoonUI:close_menu()
         return
     end
 
-    local curr_file = utils.normalize_path(vim.api.nvim_buf_get_name(0))
-    vim.cmd(
-        string.format(
-            "autocmd Filetype harpoon "
-                .. "let path = '%s' | call clearmatches() | "
-                -- move the cursor to the line containing the current filename
-                .. "call search('\\V'.path.'\\$') | "
-                -- add a hl group to that line
-                .. "call matchadd('HarpoonCurrentFile', '\\V'.path.'\\$')",
-            curr_file:gsub("\\", "\\\\")
-        )
+    self.closing = true
+    Logger:log(
+        "ui#close_menu name: ",
+        list_name(self.active_list),
+        "win and bufnr",
+        {
+            win = self.win_id,
+            bufnr = self.bufnr,
+        }
     )
-
-    local win_info = create_window()
-    local contents = {}
-    local global_config = harpoon.get_global_settings()
 
     if self.bufnr ~= nil and vim.api.nvim_buf_is_valid(self.bufnr) then
         vim.api.nvim_buf_delete(self.bufnr, { force = true })
@@ -100,40 +94,9 @@ function HarpoonUI:_create_window(toggle_opts)
         width = toggle_opts.ui_max_width
     end
 
-    local mark = Marked.get_marked_file(idx)
-    local filename = vim.fs.normalize(mark.filename)
-    local buf_id = get_or_create_buffer(filename)
-    local set_row = not vim.api.nvim_buf_is_loaded(buf_id)
-
-    local old_bufnr = vim.api.nvim_get_current_buf()
-
-    vim.api.nvim_set_current_buf(buf_id)
-    vim.api.nvim_buf_set_option(buf_id, "buflisted", true)
-    if set_row and mark.row and mark.col then
-        vim.cmd(string.format(":call cursor(%d, %d)", mark.row, mark.col))
-        log.debug(
-            string.format(
-                "nav_file(): Setting cursor to row: %d, col: %d",
-                mark.row,
-                mark.col
-            )
-        )
-    end
-
-    local old_bufinfo = vim.fn.getbufinfo(old_bufnr)
-    if type(old_bufinfo) == "table" and #old_bufinfo >= 1 then
-        old_bufinfo = old_bufinfo[1]
-        local no_name = old_bufinfo.name == ""
-        local one_line = old_bufinfo.linecount == 1
-        local unchanged = old_bufinfo.changed == 0
-        if no_name and one_line and unchanged then
-            vim.api.nvim_buf_delete(old_bufnr, {})
-        end
-    end
-end
-
-function M.location_window(options)
-    local default_options = {
+    local height = 8
+    local bufnr = vim.api.nvim_create_buf(false, true)
+    local win_id = vim.api.nvim_open_win(bufnr, true, {
         relative = "editor",
         title = toggle_opts.title or "Harpoon",
         title_pos = toggle_opts.title_pos or "left",
