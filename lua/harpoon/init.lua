@@ -23,15 +23,12 @@ local the_primeagen_harpoon = vim.api.nvim_create_augroup(
     { clear = true }
 )
 
-    local harpoon = setmetatable({
-        config = config,
-        data = Data.Data:new(),
-        logger = Log,
-        ui = Ui:new(config.settings),
-        _extensions = Extensions.extensions,
-        lists = {},
-        hooks_setup = false,
-    }, self)
+vim.api.nvim_create_autocmd({ "BufLeave", "VimLeave" }, {
+    callback = function()
+        require("harpoon.mark").store_offset()
+    end,
+    group = the_primeagen_harpoon,
+})
 
 vim.api.nvim_create_autocmd("FileType", {
     pattern = "harpoon",
